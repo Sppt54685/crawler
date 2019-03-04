@@ -1,0 +1,10 @@
+#Centos7.0 python3.5 firefox65.0.1 selenium3.141.  geckodriver0.24.0
+#20190302 Shi test1 
+
+from selenium import webdriver
+options = webdriver.FirefoxOptions()
+options.set_headless() #开启无头模式
+driver=webdriver.Firefox(firefox_options=options)
+driver.get("http://www.baidu.com")
+print(driver.title)
+driver.close()
