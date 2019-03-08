@@ -1,0 +1,31 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+
+#设置代理ip
+profile = webdriver.FirefoxProfile()
+profile.set_preference('network.proxy.type', 1)
+profile.set_preference('network.proxy.http', '124.93.201.59')
+profile.set_preference('network.proxy.http_port', 42672)
+profile.set_preference('network.proxy.ssl', '124.93.201.59')
+profile.set_preference('network.proxy.ssl_port', 42672)
+profile.update_preferences()
+driver = webdriver.Firefox(profile)
+
+#打开浏览器
+#driver = webdriver.Firefox()
+driver.get("https://www.juzimi.com/")
+
+#用户登陆
+login_click = driver.find_element_by_class_name("firstlogin")
+driver.execute_script("arguments[0].click();",login_click)
+
+ 
+#elem = driver.find_element_by_id("edit-search-theme-form-1")
+#elem.send_keys("春天")
+#elem.send_keys(Keys.RETURN)
+#btn_more = driver.find_element_by_id("edit-submit-1")
+#driver.execute_script("arguments[0].click();",btn_more)
+
+#driver.quit()
