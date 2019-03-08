@@ -1,0 +1,44 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+import time
+
+
+#设置代理ip
+profile = webdriver.FirefoxProfile()
+profile.set_preference('network.proxy.type', 1)
+profile.set_preference('network.proxy.http', '124.93.201.59')
+profile.set_preference('network.proxy.http_port', 42672)
+profile.set_preference('network.proxy.ssl', '124.93.201.59')
+profile.set_preference('network.proxy.ssl_port', 42672)
+profile.update_preferences()
+driver = webdriver.Firefox(profile)
+
+#打开浏览器访问网站
+#driver = webdriver.Firefox()
+
+driver.get("https://www.juzimi.com/")
+
+#用户登陆
+id_input = driver.find_element_by_id("edit-name")
+id_input.send_keys("sppt1226")
+time.sleep(10) 
+pw_input = driver.find_element_by_id("edit-pass")
+pw_input.send_keys("sppt1226")
+time.sleep(10)
+submit_click = driver.find_element_by_id("edit-submit")
+driver.execute_script("arguments[0].click();",submit_click)
+time.sleep(30)
+#输入关键字
+keyword_input = driver.find_element_by_id("edit-search-theme-form-1")
+keyword_input.clear()
+keyword_input.send_keys("hello")
+keyword_input.send_keys(Keys.RETURN)
+time.sleep(10) 
+
+print(driver.current_url)
+#btn_click = driver.find_element_by_id('edit-submit-1')
+#btn_click.click()
+
+driver.quit()
