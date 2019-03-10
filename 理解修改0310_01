@@ -1,0 +1,92 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from fake_useragent import UserAgent
+import time
+import requests
+#re模块提供正则表达式模式
+import re
+import json 
+
+
+starttime = time.time()
+
+#设置代理ip
+profile = webdriver.FirefoxProfile()
+profile.set_preference('network.proxy.type', 1)
+profile.set_preference('network.proxy.http', '124.93.201.59')
+profile.set_preference('network.proxy.http_port', 42672)
+profile.set_preference('network.proxy.ssl', '124.93.201.59')
+profile.set_preference('network.proxy.ssl_port', 42672)
+profile.update_preferences()
+driver = webdriver.Firefox(profile)
+# driver.add_argument('headless')
+
+driver.minimize_window()
+
+
+#用户登陆
+id_input = driver.find_element_by_id("edit-name")
+id_input.send_keys("sppt1226")
+time.sleep(10)
+pw_input = driver.find_element_by_id("edit-pass")
+pw_input.send_keys("sppt1226")
+time.sleep(10)
+submit_click = driver.find_element_by_id("edit-submit")
+driver.execute_script("arguments[0].click();",submit_click)
+time.sleep(20)
+
+#准备关键字
+authors = "沈从文 王维 张爱玲 东野圭吾"
+#authors = ['李白', '木心', '鲁迅', '王尔德'] + authors.split()
+motto_content = []
+motto_txt = open('motto.txt', 'w', encoding='utf-8') 
+
+
+for author in authors:
+    motto_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+	#u:表示unicode字符串，防止出现中文转换变成乱码
+    driver.get(u"https://www.juzimi.com")
+    driver.find_element_by_id('edit-search-theme-form-1').send_keys(author)
+    driver.find_element_by_id('edit-submit-1').click()
+    pages = driver.find_element_by_class_name('pager-last')
+    pages = int(pages.text)
+ 
+    # author_motto = []
+	#range(stop) 计数到stop结束，不包括stop。例如：range（0， 5） 是[0, 1, 2, 3, 4]没有5
+    for page in range(pages):
+		#print里面加f表示格式化字符串,加f后可以在字符串里面使用用花括号括起来的变量和表达式
+        print(f'{author} page:{page}/{pages}')
+        try:
+            # mottos = driver.find_elements_by_class_name('xlistju') #用这个定位会有其他的元素掩盖了需要点击的元素
+            mottos = driver.find_elements_by_class_name('views-row')
+            for motto in mottos:
+                t = motto.text
+                t = t.split('喜欢')[0] #以'喜欢'为分隔符，可以删除所有'喜欢'
+                # print(t)
+                title = re.search(u'《(.*)》', t) 
+                if title:
+                    title = title.group(1)
+                else:
+                    title = ''
+                content = t.split('——')[0]
+                # author_motto.append(motto.text)
+                motto_txt.write(t + '\n\n')  #每爬一句 回车两行
+                motto_content.append(
+                    {'author': author, 'title': title,
+                     'paragraphs': [content]})
+                print(motto_content[-1])
+            if page < pages:
+                driver.find_element_by_class_name('pager-next').click()
+        except UnicodeEncodeError:
+            if page < pages:
+                driver.find_element_by_class_name('pager-next').click()
+        except Exception as e:
+            print(e)
+ 
+driver.close()
+motto_txt.close()
+
+#原代码出处见上一个文件
