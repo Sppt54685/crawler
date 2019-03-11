@@ -1,0 +1,14 @@
+for author in authors:
+    motto_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    driver.get(u"https://www.juzimi.com")
+    driver.find_element_by_id('edit-search-theme-form-1').send_keys(author)
+
+#    driver.find_element_by_id('edit-submit-1').click()
+    submit_click = driver.find_element_by_id('edit-submit-1')
+    driver.execute_script('arguments[0].click();',submit_click)
+    time.sleep(10)  #为保证能够获取到元素 
+    pages = driver.find_element_by_class_name('pager-last')
+    pages = int(pages.text)
+ 
+    # author_motto = []
