@@ -1,0 +1,91 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+
+
+starttime = time.time()
+
+#设置代理ip
+profile = webdriver.FirefoxProfile()
+profile.set_preference('network.proxy.type', 1)
+profile.set_preference('network.proxy.http', '124.93.201.59')
+profile.set_preference('network.proxy.http_port', 42672)
+profile.set_preference('network.proxy.ssl', '124.93.201.59')
+profile.set_preference('network.proxy.ssl_port', 42672)
+profile.update_preferences()
+driver = webdriver.Firefox(profile)
+# driver.add_argument('headless')
+driver.minimize_window()
+
+#用户登录
+driver.get(u"https://www.juzimi.com")
+id_input = driver.find_element_by_id('edit-name')
+id_input.send_keys('sty7708')
+time.sleep(10)
+pw_input = driver.find_element_by_id('edit-pass')
+pw_input.send_keys('sty7708')
+time.sleep(10)
+submit_click = driver.find_element_by_id('edit-submit')
+driver.execute_script('arguments[0].click();',submit_click)
+time.sleep(20)
+
+
+#准备关键字
+authors = "沈从文 三毛 张爱玲 东野圭吾"
+authors = ['李白', '木心', '鲁迅', '王尔德'] + authors.split()
+motto_content = []
+motto_txt = open('motto.txt', 'w', encoding='utf-8')
+ 
+ 
+for author in authors:
+    motto_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    driver.get(u"https://www.juzimi.com")
+    driver.find_element_by_id('edit-search-theme-form-1').send_keys(author)
+
+#    driver.find_element_by_id('edit-submit-1').click()
+    submit_click = driver.find_element_by_id('edit-submit')
+    driver.execute_script('arguments[0].click();',submit_click)
+    time.sleep(10)
+    pages = driver.find_element_by_class_name('pager-last')
+    pages = int(pages.text)
+ 
+    # author_motto = []
+    for page in range(pages):
+        print(f'{author} page:{page}/{pages}')
+        try:
+           # mottos = driver.find_elements_by_class_name('xlistju')
+            mottos = driver.find_elements_by_class_name('views-row')
+            for motto in mottos:
+                t = motto.text
+                t = t.split('喜欢')[0]
+                # print(t)
+                title = re.search(u'《(.*)》', t)
+                if title:
+                    title = title.group(1)
+                else:
+                    title = ''
+                content = t.split('——')[0]
+                # author_motto.append(motto.text)
+                motto_txt.write(t + '\n\n')
+                motto_content.append(
+                    {'author': author, 'title': title,
+                     'paragraphs': [content]})
+                print(motto_content[-1])
+                #time.sleep(5)
+            if page < pages:
+                driver.find_element_by_class_name('pager-next').click()
+        except UnicodeEncodeError:
+            if page < pages:
+                driver.find_element_by_class_name('pager-next').click()
+        except Exception as e:
+            print(e)
+ 
+driver.close()
+motto_txt.close()
