@@ -1,0 +1,17 @@
+# coding:utf-8
+import requests
+from bs4 import BeautifulSoup
+cookie = '''__cfduid=d7316e62382bb0e6a1a23362ca46a781e1551096426; xqrclbr=21915; visited=1; _ga=GA1.2.1242979797.1551096665; UM_distinctid=16957217edb79b-020ee27b33e0ab-1333063-e1000-16957217edc69f; CNZZDATA1256508575=1159149076-1551941393-%7C1551941393; juzimiuser=sppt1226; CNZZDATA1256504232=1735172287-1551956153-https%253A%252F%252Fwww.juzimi.com%252F%7C1552227268; has_js=1; _gid=GA1.2.1865423580.1552897775; xcssjserrorcall=1; Hm_lvt_0684e5255bde597704c827d5819167ba=1551096441,1551150264,1551692188,1552897785; homere=1; SESSc60faee9ca2381b86f19bef9617d499b=vco7urkaeq3cc1m05vei559u12; DRUPAL_UID=1; xqlastpmgrowl=59416; Hm_lpvt_0684e5255bde597704c827d5819167ba=1552897820; Hm_cv_0684e5255bde597704c827d5819167ba=1*login*PC-1!1*version*PC; xqrcli=MTU1Mjg5Nzg5NiwxMjgwKjcyMCxXaW4zMixOZXRzY2FwZSwyMTkxNQ%3D%3D'''
+proxies={'http':'124.93.201.59:42672','https':'124.93.201.59:42672'}
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookie,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36'}
+url = 'https://www.juzimi.com/'
+wbdata = requests.get(url,proxies=proxies,headers=header).text
+soup = BeautifulSoup(wbdata,'lxml')
+print(soup)
