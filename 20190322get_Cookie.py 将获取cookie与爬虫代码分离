@@ -1,6 +1,6 @@
-#20190322 21:09 Spt
-
-from selenium import webdriver
+＃20190322 21:09 Spt
+#获取cookie保存为juzimicookie.json
+来自selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.common.by import By
@@ -37,6 +37,6 @@ text = driver.page_source
 cookie = driver.get_cookies()
 #print(cookie)
 jsonCookies = json.dumps(cookie)
-with open('juzimipage.json','w') as f:
+with open('juzimicookie.json','w') as f:
     f.write(jsonCookies)
 driver.quit()
