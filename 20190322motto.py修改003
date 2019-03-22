@@ -1,0 +1,74 @@
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+
+
+starttime = time.time()
+
+#设置cookie值
+#str='' 这一句注释了不影响
+with open('juzimicookie.json','r',encoding='utf-8') as f:
+    listCookies=json.loads(f.read())
+cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+cookiestr = '; '.join(item for item in cookie)
+#print(cookiestr)
+
+#设置请求头
+proxies={'http':'60.191.57.79:14888','https':'60.191.57.79:14888'}
+ua = UserAgent()
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookiestr,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36'
+}
+
+url = 'https://www.juzimi.com'
+#关键字
+authors = "沈从文 东野圭吾"
+authors = ['李白', '鲁迅'] + authors.split()
+#一页有10个句子 
+counts = 10
+#第一层循环用于获取目标网页源代码
+for author in authors:
+    motto2_txt = open('author'+'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies=proxies,headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+#知道最大页码之后 开始爬
+    for page in range(pages):
+#未注释下面这几句时因为发送了太多次请求而无法获取requests的结果
+#有try/except 当page<pages时最大的那层循环里的Url会被重新幅值为后面页码的url
+#        RUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+#        Rhtml = requests.get(url=Url,proxies=proxies,headers=header).text
+#        rsoup = BeautifulSoup(Rhtml,'lxml')
+		
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = soup.find_all('span',class_ = 'views-field-field-oriarticle-value')
+            for count in range(counts):
+                content = contents[count].text
+                title = titles[count].text
+                motto2_txt.write(content + '\n' +'——' + title + '\n\n')
+                time.sleep(3)
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
