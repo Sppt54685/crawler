@@ -36,7 +36,7 @@ time.sleep(5)
 submit_click = driver.find_element_by_id('edit-submit')
 driver.execute_script('arguments[0].click();',submit_click)
 time.sleep(10)
-print(driver.current_url)
+#print(driver.current_url)
 text = driver.page_source
 cookie = driver.get_cookies()
 #print(cookie)
@@ -48,7 +48,7 @@ with open('juzimipage.json','r',encoding='utf-8') as f:
     listCookies=json.loads(f.read())
 cookie = [item["name"] + "=" + item["value"] for item in listCookies]
 cookiestr = '; '.join(item for item in cookie)
-print(cookiestr)
+#print(cookiestr)
 driver.quit()
 
 proxies={'http':'222.212.88.12:32142','https':'222.212.88.12:32142'}
