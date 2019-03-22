@@ -1,0 +1,76 @@
+
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+
+
+starttime = time.time()
+
+#设置cookie值
+#这个str 我不晓得是干啥的...不注释掉不能调用str()函数/可以改用format函数(格式化)
+str=''
+with open('juzimicookie.json','r',encoding='utf-8') as f:
+    listCookies=json.loads(f.read())
+cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+cookiestr = '; '.join(item for item in cookie)
+#print(cookiestr)
+
+#设置请求头
+proxies={'http':'222.212.88.12:32142','https':'222.212.88.12:32142'}
+ua = UserAgent()
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookiestr,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':ua.random
+}
+
+url = 'https://www.juzimi.com'
+#关键字
+authors = "沈从文 三毛 张爱玲 东野圭吾"
+authors = ['李白', '木心', '鲁迅', '王尔德'] + authors.split()
+#counts计当页motto数
+counts = 10
+#第一层循环用于获取目标网页源代码
+for author in authors:
+    motto2_txt = open( 'author' +'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies=proxies,headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(5)
+#知道最大页码之后 开始爬
+    for page in range(pages):
+        RUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+        Rhtml = requests.get(url=RUrl,proxies=proxies,headers=header).text
+        rsoup = BeautifulSoup(Rhtml,'lxml')
+		
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = rsoup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = rsoup.find_all('span',class_ = 'views-field-field-oriarticle-value')
+
+            for count in range(counts):
+                
+				        content = contents[count].text
+				        title = titles[count].text
+                motto2_txt.write(content + '\n' +'——' + title + '\n\n')
+                time.sleep(3)
+            if page < pages:
+                RUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page)
+        except UnicodeEncodeError:
+            if page < pages:
+                RUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page)
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
