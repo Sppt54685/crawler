@@ -1,0 +1,78 @@
+#20190322 23:31
+#spt from fzu
+
+
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+
+
+starttime = time.time()
+
+#设置cookie值
+with open('juzimicookie.json','r',encoding='utf-8') as f:
+    listCookies=json.loads(f.read())
+cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+cookiestr = '; '.join(item for item in cookie)
+#print(cookiestr)
+
+#设置代理ip池
+pro = ['211.159.171.58:80','163.204.245.64:9999','115.218.218.15:9000','123.55.39.54:53281']
+#proxies={'http':'60.191.57.79:14888','https':'60.191.57.79:14888'}
+
+
+#设置请求头
+ua = UserAgent()
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookiestr,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':ua.random
+}
+
+url = 'https://www.juzimi.com'
+#关键字
+authors = "沈从文 东野圭吾"
+authors = ['李白', '鲁迅'] + authors.split()
+#一页有10个句子 
+counts = 10
+#第一层循环用于获取目标网页源代码
+for author in authors:
+    motto2_txt = open(author +'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+#知道最大页码之后 开始爬
+    for page in range(pages):
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = soup.find_all('span',class_ = 'views-field-field-oriarticle-value')
+
+            for count in range(counts):
+                content = contents[count].text
+                title = titles[count].text
+                motto2_txt.write(content + '\n' +'——' + title + '\n\n')
+                time.sleep(3)
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + str(page)
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
+#加入代理ip池 比单个ip访问更快
+#但是爬取的数据与预期不同 句子中有<br>标签的长句都未爬到 只爬了第一页的短句
