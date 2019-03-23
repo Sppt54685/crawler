@@ -1,0 +1,41 @@
+for author in authors:
+    motto2_txt = open( author +'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+#知道最大页码之后 开始爬
+    for page in range(pages):
+		
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = soup.find_all('span',class_ = 'views-field-field-oriarticle-value')
+            motto2_txt.write('-----' + ' 换页 ' + '-----' + '\n')
+#            for count in range(counts):
+            for content in contents:
+#                content = contents[count].text
+#                title = titles[count].text
+                motto2_txt.write(content.text +'\n')
+#                motto2_txt.write(content.text + '\n\n' +'——' + title + '\n\n')
+                
+                time.sleep(3)    
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
