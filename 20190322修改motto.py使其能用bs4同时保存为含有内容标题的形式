@@ -1,0 +1,49 @@
+#20190322 15:59
+#SPT FROM FZU
+
+url = 'https://www.juzimi.com'
+#关键字
+authors = "沈从文 东野圭吾"
+authors = ['张爱玲', '鲁迅'] + authors.split()
+#一页有10个句子 
+counts = 10
+#第一层循环用于获取目标网页源代码
+for author in authors:
+    motto2_txt = open( author +'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+#知道最大页码之后 开始爬
+    for page in range(pages):
+		
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+#            titles = soup.find_all('span',class_ = 'views-field-field-oriarticle-value')
+            titles = soup.find_all('div',class_ = 'xqjulistwafo')
+            motto2_txt.write('-----' + ' 换页 ' + '-----' + '\n')
+#            for content in contents: 
+#                for title in titles:
+            for count in range(counts):
+                motto2_txt.write(contents[count].text +'\n' + '——' + titles[count].text.replace('（全文）', ' ') +'\n\n')         
+                time.sleep(3)                    
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
