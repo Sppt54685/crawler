@@ -37,5 +37,5 @@ for author in authors:
 
         except Exception as e:
             print(e)
- 
+  
     motto2_txt.close()
