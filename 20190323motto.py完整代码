@@ -1,0 +1,79 @@
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+import random
+
+
+starttime = time.time()
+
+#设置cookie值
+with open('juzimicookie.json','r',encoding='utf-8') as f:
+    listCookies=json.loads(f.read())
+cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+cookiestr = '; '.join(item for item in cookie)
+#print(cookiestr)
+
+#设置代理ip池
+pro = ['211.159.171.58:80','163.204.245.64:9999','115.218.218.15:9000','123.55.39.54:53281']
+#proxies={'http':'60.191.57.79:14888','https':'60.191.57.79:14888'}
+
+#设置请求头
+ua = UserAgent()
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookiestr,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':ua.random
+#'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/72.0.3626.109 Safari/537.36'
+}
+
+url = 'https://www.juzimi.com'
+#关键字
+authors = "沈从文 东野圭吾"
+authors = ['张爱玲', '鲁迅'] + authors.split()
+#一页有10个句子 
+counts = 10
+
+for author in authors:
+    motto2_txt = open( author +'.txt', 'w', encoding='utf-8')
+    motto2_txt.write('\n\n# ' + author +
+                    '\n------------------------------------\n')
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+    
+    for page in range(pages):
+		
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = soup.find_all('div',class_ = 'xqjulistwafo')
+            motto2_txt.write('-----' + ' 换页 ' + '-----' + '\n')
+            
+            for count in range(counts):
+                motto2_txt.write(contents[count].text +'\n' + '——' + titles[count].text.replace('（全文）', ' ') +'\n\n')         
+                time.sleep(3)                    
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except Exception as e:
+            print(e)
+ 
+    motto2_txt.close()
