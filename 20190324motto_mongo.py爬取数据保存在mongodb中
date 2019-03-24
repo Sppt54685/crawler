@@ -1,0 +1,102 @@
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import time
+import requests
+import re
+import json 
+import random
+import pymongo
+
+starttime = time.time()
+
+#设置cookie值
+with open('juzimicookie.json','r',encoding='utf-8') as f:
+    listCookies=json.loads(f.read())
+cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+cookiestr = '; '.join(item for item in cookie)
+#print(cookiestr)
+
+#设置代理ip池
+pro = ['211.159.171.58:80','163.204.245.64:9999','115.218.218.15:9000','123.55.39.54:53281']
+#proxies={'http':'60.191.57.79:14888','https':'60.191.57.79:14888'}
+
+#设置请求头
+ua = UserAgent()
+header = {
+'Connection': 'keep-alive',
+'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+'Accept-Encoding':'gzip, deflate, br',
+'Accept-Language':'zh-CN,zh;q=0.9',
+'Cookie': cookiestr,
+'Upgrade-Insecure-Requests':'1',
+'User-Agent':ua.random
+}
+	
+url = 'https://www.juzimi.com'
+#关键字
+authors = ['张爱玲', '鲁迅','沈从文']
+#一页有10个句子 
+counts = 10
+#连接mongodb
+client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
+
+#第一层循环用于获取目标网页源代码
+for author in authors:
+    #准备数据库
+    db = client.test #“图书馆”（数据库）名为test
+    collection = db[author]  #用author命名“书架”（集合）
+    #判断集合author_otto是否为空 不是则清空集合
+    collist = db.list_collection_names()
+    if author in collist:
+        print('the collection named ',author, ' already exits!')
+        #查询“书架”上是否有“书”（文档），若有则清空
+        mydict = collection.find()
+        if mydict:
+            x  = collection.delete_many({})
+            print(x.deleted_count,'个文档已删除')
+    #获取最大页码
+    Url = url + '/search/node/' + author + '%20type:sentence'
+    html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_ = 'pager-last')
+    pages = int(pages[0].text)
+    time.sleep(3)
+    
+    #爬虫工作
+    for page in range(pages):
+        print(f'{author} page:{page+1}/{pages}')
+        try:
+            contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+            titles = soup.find_all('div',class_ = 'xqjulistwafo')
+            for count in range(counts):
+                content = contents[count].text
+                title = titles[count].text.replace('（全文）', ' ').replace(author,'').replace('——','')
+               #data为书架上的书
+                data = {
+                    'author':author,
+                    'title':title,
+                    'juzi':content
+                     }
+                result = collection.insert_one(data)
+                #inser_one()返回对象及_id
+                #print (result)
+                #print (result.inserted_id)
+#        mottos = collection.find({},{'_id':0,'author':1,'title':1})  #0表示不显示，1表示显示
+#        for motto in mottos:
+#            print(motto)
+
+                time.sleep(3)                    
+
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except UnicodeEncodeError:
+            if page < pages:
+                Url = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                html = requests.get(url=Url,proxies={'http':random.choice(pro)},headers=header).text
+                soup = BeautifulSoup(html,'lxml')
+
+        except Exception as e:
+            print(e)
