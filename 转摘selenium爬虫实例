@@ -30,7 +30,7 @@ for author in authors:
     browser.find_element_by_id('edit-submit-1').click()
     pages = browser.find_element_by_class_name('pager-last')
     pages = int(pages.text)
- 
+  
     # author_motto = []
     for page in range(pages):
         print(f'{author} page:{page}/{pages}')
