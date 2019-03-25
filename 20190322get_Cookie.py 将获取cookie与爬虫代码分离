@@ -39,3 +39,4 @@ jsonCookies = json.dumps(cookie)
 with open('juzimicookie.json','w') as f:
     f.write(jsonCookies)
 driver.quit()
+ 
