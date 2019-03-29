@@ -1,0 +1,45 @@
+
+#------get_cookie.py-------------------
+#获取cookie保存为juzimicookie.json
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+import time
+import json 
+
+starttime = time.time()
+#proxyIP = '163.204.245.35'
+#proxyPort= 9999
+#设置代理ip
+#profile = webdriver.FirefoxProfile()
+#设置代理ip之后加载页面太慢 索性趁本地ip没有被封用本地ip获取cookie
+#很快！
+options = webdriver.FirefoxOptions()
+options.set_headless() #开启无头模式
+driver=webdriver.Firefox(firefox_options=options)
+
+#driver = webdriver.Firefox()
+#driver.minimize_window()
+
+#用户登录并获取cookie
+#url='https://www.juzimi.com'
+driver.get(u'https://www.juzimi.com')
+time.sleep(3)
+id_input = driver.find_element_by_id('edit-name')
+id_input.send_keys('sppt1226')
+#time.sleep(10)
+pw_input = driver.find_element_by_id('edit-pass')
+pw_input.send_keys('sppt1226')
+time.sleep(5)
+submit_click = driver.find_element_by_id('edit-submit')
+driver.execute_script('arguments[0].click();',submit_click)
+time.sleep(10)
+#print(driver.current_url)
+text = driver.page_source
+cookie = driver.get_cookies()
+#print(cookie)
+jsonCookies = json.dumps(cookie)
+with open('juzimicookie.json','w') as f:
+    f.write(jsonCookies)
+driver.quit()
