@@ -1,0 +1,157 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+import time
+import json
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+import re
+import random
+import pymongo
+
+url = 'https://www.juzimi.com'
+myProxy = ['211.159.171.58:80','163.204.245.64:9999','115.218.218.15:9000','123.55.39.54:53281']
+#每页10个句子
+counts = 10
+
+
+
+
+def get_cookie():
+    options = webdriver.FirefoxOptions()
+    options.set_headless()
+    #如果ip被封 需要设置代理IP 这里暂不设
+    driver = webdriver.Firefox(firefox_options=options)
+    #模拟用户登录
+    driver.get(url)
+    time.sleep(3)
+    id_input = driver.find_element_by_id('edit-name') 
+    id_input.send_keys('sppt1226')
+    pw_input = driver.find_element_by_id('edit-pass')
+    time.sleep(2)
+    pw_input.send_keys('sppt1226')
+    time.sleep(5)
+    submit_click = driver.find_element_by_id('edit-submit')
+    driver.execute_script('arguments[0].click();',submit_click)
+    driver.implicitly_wait(1)
+    cookie_list = driver.get_cookies()
+    jsonCookies = json.dumps(cookie_list)
+    with open('juzimicookie.json','w') as f:
+        f.write(jsonCookies)
+    driver.quit()
+    return cookie_list
+
+def cookiestr():
+    with open('juzimicookie.json','r',encoding='utf-8') as f:
+        listCookies=json.loads(f.read())
+    cookie = [item["name"] + "=" + item["value"] for item in listCookies]
+    cookiestr = '; '.join(item for item in cookie)
+    return cookiestr
+
+
+def set_header():
+    cookiestr = cookiestr()
+    ua = UserAgent()
+    header = {
+        'Connection': 'keep-alive',
+        'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Encoding':'gzip, deflate, br',
+        'Accept-Language':'zh-CN,zh;q=0.9',
+		'Cookie': cookiestr,
+        'Upgrade-Insecure-Requests':'1',
+        'User-Agent':ua.random
+    }
+    return header
+	
+
+def get_pages(authors):
+    #获取最大页码
+    RealUrl = url + '/search/node/' + author + '%20type:sentence'
+    header = set_header()
+	#请求头中含cookie信息 可获取深层数据
+    html = requests.get(url=RealUrl,proxies={'http':random.choice(myProxy)},headers=header).text
+    soup = BeautifulSoup(html,'lxml')
+    pages = soup.find_all('li',class_='pager-last')
+    pages = int(pages[0].text)
+    return pages
+	
+def juzi_crawler(authors):
+
+    #无头浏览器
+    profile = webdriver.FirefoxOptions()
+    profile.set_headless()
+    #设置代理服务器
+    #myProxy = ['211.159.171.58:80','163.204.245.64:9999','115.218.218.15:9000','123.55.39.54:53281']
+    #设置cookie
+    driver = webdriver.Firefox(firefox_options=profile)
+    driver.get(url)
+    driver.delete_all_cookies()
+    savedCookies = get_cookie()
+    for cookie in savedCookies:
+        driver.add_cookie(cookie)
+
+   
+    #连接mongodb
+    client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
+
+    for author in authors:
+    #准备数据库
+        db = client.test #“图书馆”（数据库）名为test
+        collection = db[author]  #用author命名“书架”（集合）
+    #判断集合author_otto是否为空 不是则清空集合
+        collist = db.list_collection_names()
+        if author in collist:
+            print('the collection named ',author, ' already exits!')
+        #查询“书架”上是否有“书”（文档），若有则清空
+            mydict = collection.find()
+            if mydict:
+                x  = collection.delete_many({})
+                print(x.deleted_count,'个文档已删除')
+    #获取最大页码
+        pages = get_pages(author)
+
+        time.sleep(3)  
+    
+    #爬虫工作
+        for page in range(pages):
+            print(f'{author} page:{page+1}/{pages}')
+            try:
+                contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
+                titles = soup.find_all('div',class_ = 'xqjulistwafo')
+                for count in range(counts):
+                    content = contents[count].text.replace('\n','')
+                    title = titles[count].text.replace('（全文）', '').replace(author,'').replace('——','')
+               #data为书架上的书
+                    data = {
+                         'author':author,
+                         'title':title,
+                         'juzi':content
+				    	 }
+                    result = collection.insert_one(data)
+
+                    time.sleep(3)                    
+
+                if page < pages:
+                    RealUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                    driver.get(RealUrl)
+                    html = driver.page_source
+                    soup = BeautifulSoup(html,'lxml')
+
+            except UnicodeEncodeError:
+                if page < pages:
+                    RealUrl = url + '/search/node/' + author + '%20type%3Asentence?page=' + format(page+1)
+                    driver.get(RealUrl)
+                    html = driver.page_source
+                    soup = BeautifulSoup(html,'lxml')
+            except Exception as e:
+                print(e)
+    driver.quit()
+	
+	
+	
+	
+if __name__ == '__main__':
+    
+    authors = ['张爱玲','东野圭吾']
+    juzi_crawler(authors)
