@@ -1,0 +1,43 @@
+
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
+from selenium.webdriver.common.by import By
+import time
+import json 
+
+
+starttime = time.time()
+
+def getCookie(user,txt_name):
+    options = webdriver.FirefoxOptions()
+    options.set_headless() #开启无头模式
+    driver=webdriver.Firefox(firefox_options=options)
+
+
+ 
+    driver.get(u'https://www.juzimi.com')
+    time.sleep(3)
+    id_input = driver.find_element_by_id('edit-name')
+    id_input.send_keys(user)
+#time.sleep(10)
+    pw_input = driver.find_element_by_id('edit-pass')
+    pw_input.send_keys(user)
+    time.sleep(5)
+    submit_click = driver.find_element_by_id('edit-submit')
+    driver.execute_script('arguments[0].click();',submit_click)
+    time.sleep(10)
+#print(driver.current_url)
+    text = driver.page_source
+    cookie = driver.get_cookies()
+#print(cookie)
+    jsonCookies = json.dumps(cookie)
+    with open(txt_name+'.json','w') as f:
+        f.write(jsonCookies + '\n')
+    driver.quit()
+
+	
+if __name__ == '__main__':
+    getCookie('spt1226','juzicookie1')
+	getCookie('sty7708','juzicookie2')
+	getCookie('kky5530','juzicookie3')
