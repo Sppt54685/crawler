@@ -111,7 +111,7 @@ def crawler(keyword,delay):
     print(keyword,":start ", time.ctime())
     html_list = get_html(keyword,delay)
     pages = len(html_list)
-    page=1
+    page = 0
     counts = 10
     client = pymongo.MongoClient('mongodb://127.0.0.1:27017')
     db = client.test
@@ -125,7 +125,7 @@ def crawler(keyword,delay):
             print(x.deleted_count,'个文档已删除')
    
     for soup in html_list:
-        print(f'{keyword} page:{page}/{pages}')
+        print(f'{keyword} page:{page+1}/{pages}')
         contents = soup.find_all('div',class_ = 'views-field-phpcode-1')
         titles = soup.find_all('div',class_ = 'xqjulistwafo')
         for count in range(counts):
