@@ -102,7 +102,7 @@ def get_html(keyword,delay):
         time.sleep(delay)
     visitedUrl = set(visitedUrl)
     if url_set==visitedUrl:
-        print('目标网页皆已保存')
+        print('目标网页源代码皆已保存')
     driver.quit()
     return html_list	
 
@@ -139,7 +139,7 @@ def crawler(keyword,delay):
             insert_mongo = collection.insert_one(data)
         page+=1                 
     if page==pages:
-        print('目标网页皆已保存')
+        print('目标网页句子皆已保存')
     print(keyword,":end ", time.ctime())
 	
 if __name__ == '__main__': 
